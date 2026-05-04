@@ -42,6 +42,15 @@ BYTEDANCE_AIDP_IMAGE_MODEL=gpt-image-2
 IMAGE_PROVIDER=bytedance-aidp
 ```
 
+For ByteDance AIDP text planning:
+
+```text
+BYTEDANCE_AIDP_TEXT_API_KEY=...
+BYTEDANCE_AIDP_TEXT_BASE_URL=https://aidp.bytedance.net/api/modelhub/online/v2/crawl/openai/deployments/gpt_openapi
+BYTEDANCE_AIDP_TEXT_MODEL=gpt-5.4-2026-03-05
+TEXT_PROVIDER=bytedance-aidp
+```
+
 Office network deployments should use the office base URL domain:
 
 ```text
@@ -60,6 +69,8 @@ src/server/model-providers/
   types.ts
   mock-image-provider.ts
   bytedance-aidp-image-provider.ts
+  mock-text-provider.ts
+  bytedance-aidp-text-provider.ts
   custom-image-provider.example.ts
 ```
 
@@ -145,6 +156,8 @@ export interface TextProvider {
   planNextPage(input: PlanNextPageInput): Promise<PlanNextPageOutput>;
 }
 ```
+
+Text providers are responsible for outline extraction, page planning, and prompt preparation. The image provider should not decide the product structure by itself.
 
 ## 5. Replacement Rule
 
@@ -239,3 +252,37 @@ editImage(input): Promise<GenerateImageOutput>
 ```
 
 using the OpenAI-compatible `images.edit` API with `image[]`, `mask`, `prompt`, `model`, `quality`, `size`, and `n`.
+
+## 9. ByteDance AIDP Text Provider Contract
+
+The ByteDance AIDP text provider should live in one file:
+
+```text
+src/server/model-providers/bytedance-aidp-text-provider.ts
+```
+
+It should be responsible for:
+
+- Reading `BYTEDANCE_AIDP_TEXT_API_KEY`.
+- Reading `BYTEDANCE_AIDP_TEXT_BASE_URL`.
+- Reading `BYTEDANCE_AIDP_TEXT_MODEL`.
+- Producing a stable JSON page plan.
+- Never exposing the key to the browser.
+
+The provider should return:
+
+```json
+{
+  "title": "short page title",
+  "summary": "short page intent",
+  "visualPrompt": "image-generation prompt",
+  "nodes": [
+    {
+      "title": "node title",
+      "description": "node meaning"
+    }
+  ]
+}
+```
+
+The text model can have a large context window, but the Phase 1 implementation should still keep prompts compact so image generation latency remains the main bottleneck.

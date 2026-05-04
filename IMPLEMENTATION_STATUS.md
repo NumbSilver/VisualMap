@@ -21,6 +21,8 @@ Flipbook-style direct generation prototype
 - Replaceable model provider abstraction.
 - Mock image provider for open source local runs without secrets.
 - ByteDance AIDP image provider for internal demo runs.
+- Mock text provider for open source local runs without secrets.
+- ByteDance AIDP text provider for outline extraction and page planning.
 - Environment variable based provider selection.
 - `.env.example` with non-secret configuration shape.
 
@@ -47,9 +49,11 @@ open app
   -> generate the next deeper visual page
 ```
 
-With `IMAGE_PROVIDER=mock`, the app runs without any external API key and shows a generated SVG placeholder.
+With `IMAGE_PROVIDER=mock` and `TEXT_PROVIDER=mock`, the app runs without any external API key and shows a generated SVG placeholder.
 
 With `IMAGE_PROVIDER=bytedance-aidp` and `BYTEDANCE_AIDP_AK` configured, the app calls the ByteDance AIDP OpenAI-compatible `gpt-image-2` endpoint and renders real generated images.
+
+With `TEXT_PROVIDER=bytedance-aidp` and `BYTEDANCE_AIDP_TEXT_API_KEY` configured, the app calls the ByteDance AIDP OpenAI-compatible `gpt-5.4-2026-03-05` endpoint to produce the page title, summary, nodes, and visual prompt before image generation.
 
 ## How To Run
 
@@ -80,6 +84,14 @@ BYTEDANCE_AIDP_USE_OFFICE=true \
 npm run dev
 ```
 
+Run with ByteDance AIDP text planning and mock image generation:
+
+```bash
+TEXT_PROVIDER=bytedance-aidp \
+BYTEDANCE_AIDP_TEXT_API_KEY=your-text-api-key \
+npm run dev
+```
+
 Then open:
 
 ```text
@@ -96,11 +108,13 @@ Latest local checks:
 - `npm run build`: passed.
 - `npm audit --omit=dev`: 0 vulnerabilities after `postcss` override.
 - ByteDance AIDP provider route test: passed.
+- ByteDance AIDP text provider route test: passed.
 
 Observed AIDP generation speed:
 
 ```text
 preview / low request through local API: about 51s
+text planning request through local API: about 9.5s
 ```
 
 Effect quality:

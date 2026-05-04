@@ -304,6 +304,21 @@ a {
   color: var(--danger) !important;
 }
 
+.plan-preview {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.plan-preview strong {
+  margin: 0;
+  font-size: 13px;
+}
+
+.plan-preview p {
+  margin-top: 6px;
+}
+
 @keyframes pulse {
   0%,
   100% {

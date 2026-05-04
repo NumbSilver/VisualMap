@@ -20,6 +20,36 @@ export interface ImageProvider {
   generateImage(input: GenerateImageInput): Promise<GenerateImageOutput>;
 }
 
+export interface PlanNextPageInput {
+  source: string;
+  sourceSummary: string;
+  currentPath: string[];
+  clickedCoordinates?: {
+    x: number;
+    y: number;
+  };
+  mode: "explain" | "explore" | "add";
+  depth: number;
+}
+
+export interface PlannedNode {
+  title: string;
+  description: string;
+}
+
+export interface PlanNextPageOutput {
+  title: string;
+  summary: string;
+  visualPrompt: string;
+  nodes: PlannedNode[];
+  provider: string;
+  model: string;
+}
+
+export interface TextProvider {
+  planNextPage(input: PlanNextPageInput): Promise<PlanNextPageOutput>;
+}
+
 export class ProviderConfigurationError extends Error {
   constructor(message: string) {
     super(message);

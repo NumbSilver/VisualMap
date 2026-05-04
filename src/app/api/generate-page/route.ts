@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getImageProvider } from "@/server/model-providers";
+import { getImageProvider, getTextProvider } from "@/server/model-providers";
 import { ProviderConfigurationError } from "@/server/model-providers/types";
 
 export const runtime = "nodejs";
@@ -42,7 +42,7 @@ function formatClick(click: GeneratePageRequest["click"]) {
   )}. Generate a deeper visual page that feels like zooming into that region.`;
 }
 
-function buildImagePrompt(input: GeneratePageRequest) {
+function buildFallbackImagePrompt(input: GeneratePageRequest) {
   const depth = input.depth ?? 0;
   const mode = input.mode ?? "explore";
   const path = input.path?.length ? input.path.join(" / ") : "root";
@@ -86,9 +86,30 @@ export async function POST(request: Request) {
       source: body.source.trim(),
       click: normalizeClick(body.click)
     };
-    const prompt = buildImagePrompt(normalized);
-    const provider = getImageProvider();
-    const result = await provider.generateImage({
+    const textProvider = getTextProvider();
+    const plan = await textProvider.planNextPage({
+      source: normalized.source,
+      sourceSummary: summarizeSource(normalized.source),
+      currentPath: normalized.path ?? [],
+      clickedCoordinates: normalized.click,
+      mode: normalized.mode ?? "explore",
+      depth: normalized.depth ?? 0
+    });
+
+    const prompt = [
+      buildFallbackImagePrompt(normalized),
+      "",
+      "Page plan:",
+      `Title: ${plan.title}`,
+      `Summary: ${plan.summary}`,
+      "Planned visual prompt:",
+      plan.visualPrompt,
+      "Planned nodes:",
+      ...plan.nodes.map((node) => `- ${node.title}: ${node.description}`)
+    ].join("\n");
+
+    const imageProvider = getImageProvider();
+    const result = await imageProvider.generateImage({
       prompt,
       aspectRatio: "16:9",
       quality: "preview",
@@ -98,6 +119,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       id: `page_${Date.now()}`,
       prompt,
+      plan,
       source: normalized.source,
       depth: normalized.depth ?? 0,
       click: normalized.click ?? null,
@@ -105,6 +127,8 @@ export async function POST(request: Request) {
       image: `data:${result.mimeType};base64,${result.imageBase64}`,
       provider: result.provider,
       model: result.model,
+      textProvider: plan.provider,
+      textModel: plan.model,
       usage: result.usage ?? null
     });
   } catch (error) {

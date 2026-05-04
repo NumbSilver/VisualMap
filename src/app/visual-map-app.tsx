@@ -13,6 +13,13 @@ interface GeneratedPage {
   image: string;
   provider: string;
   model: string;
+  textProvider?: string;
+  textModel?: string;
+  plan?: {
+    title: string;
+    summary: string;
+    nodes: Array<{ title: string; description: string }>;
+  };
   prompt: string;
   click: { x: number; y: number } | null;
 }
@@ -217,7 +224,17 @@ export function VisualMapApp() {
               <dt>Model</dt>
               <dd>{currentPage.model}</dd>
             </div>
+            <div>
+              <dt>Planner</dt>
+              <dd>{currentPage.textProvider ?? "unknown"}</dd>
+            </div>
           </dl>
+        ) : null}
+        {currentPage?.plan ? (
+          <div className="plan-preview">
+            <strong>{currentPage.plan.title}</strong>
+            <p>{currentPage.plan.summary}</p>
+          </div>
         ) : null}
         {error ? <p className="error-text">{error}</p> : null}
       </aside>
