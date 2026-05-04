@@ -56,6 +56,8 @@ function buildPlanningPrompt(input: PlanNextPageInput) {
     "- It should feel like a complete rendered visual map.",
     "- Text in the image prompt must be short and readable.",
     "- Use 4-7 visual nodes.",
+    "- If clicked coordinates are present, plan a zoom-in page centered on that clicked area, not a richer version of the same overview.",
+    "- A zoom-in page should reveal fine details, local structure, close-up labels, and a stronger focal point.",
     "- Explain mode should be source-grounded.",
     "- Explore mode can extend into related possibilities.",
     "- Add mode should suggest annotation surfaces.",

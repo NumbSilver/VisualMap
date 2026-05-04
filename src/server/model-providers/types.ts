@@ -3,6 +3,8 @@ export type VisualMapQuality = "preview" | "final" | "auto";
 
 export interface GenerateImageInput {
   prompt: string;
+  referenceImageBase64?: string;
+  referenceImageMimeType?: string;
   aspectRatio?: VisualMapAspectRatio;
   quality?: VisualMapQuality;
   logId?: string;

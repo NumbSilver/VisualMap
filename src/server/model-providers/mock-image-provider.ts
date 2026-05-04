@@ -11,6 +11,7 @@ function escapeXml(value: string) {
 export const mockImageProvider: ImageProvider = {
   async generateImage(input: GenerateImageInput): Promise<GenerateImageOutput> {
     const title = escapeXml(input.prompt.slice(0, 110));
+    const zoomLabel = input.referenceImageBase64 ? "Zoom Reference Active" : "No Reference";
     const svg = `
       <svg xmlns="http://www.w3.org/2000/svg" width="1536" height="1024" viewBox="0 0 1536 1024">
         <defs>
@@ -33,6 +34,7 @@ export const mockImageProvider: ImageProvider = {
         <g fill="#f4efe5" font-family="Inter, system-ui, sans-serif">
           <text x="120" y="92" font-size="42" font-weight="700">VisualMap Mock Provider</text>
           <text x="120" y="146" font-size="22" opacity="0.72">No image API key configured. The app shell is still interactive.</text>
+          <text x="120" y="182" font-size="20" opacity="0.68">${zoomLabel}</text>
           <text x="220" y="248" font-size="26" font-weight="700">Source</text>
           <text x="656" y="502" font-size="26" font-weight="700">Generated Page</text>
           <text x="1052" y="704" font-size="26" font-weight="700">Click to Drill</text>

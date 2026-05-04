@@ -12,6 +12,7 @@ interface GeneratePageRequest {
     x: number;
     y: number;
   };
+  parentImage?: string;
   mode?: "explain" | "explore" | "add";
 }
 
@@ -37,9 +38,28 @@ function formatClick(click: GeneratePageRequest["click"]) {
     return "No parent click. Generate the opening overview map.";
   }
 
-  return `The user clicked normalized coordinates x=${click.x.toFixed(2)}, y=${click.y.toFixed(
-    2
-  )}. Generate a deeper visual page that feels like zooming into that region.`;
+  return [
+    `The user clicked normalized coordinates x=${click.x.toFixed(2)}, y=${click.y.toFixed(2)}.`,
+    "The next image must feel like the camera zoomed into that exact clicked region.",
+    "Do not merely add more objects to the old composition.",
+    "Replace the old overview with a close-up scene centered on the clicked area, revealing finer details, labels, and micro-structure."
+  ].join(" ");
+}
+
+function parseDataUrl(dataUrl?: string) {
+  if (!dataUrl) {
+    return undefined;
+  }
+
+  const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  if (!match) {
+    return undefined;
+  }
+
+  return {
+    mimeType: match[1],
+    base64: match[2]
+  };
 }
 
 function buildFallbackImagePrompt(input: GeneratePageRequest) {
@@ -59,6 +79,9 @@ function buildFallbackImagePrompt(input: GeneratePageRequest) {
     `Depth: ${depth}`,
     `Mode: ${mode}. Explain should look more source-grounded; Explore can feel more expansive; Add can suggest annotation surfaces.`,
     formatClick(input.click),
+    input.parentImage
+      ? "A parent image is provided as visual reference. Preserve its style, but zoom into the clicked region as if entering it."
+      : "No parent image is provided; generate the opening overview.",
     "Compose the image as one complete immersive canvas with a central focus and 4-7 surrounding visual nodes."
   ].join("\n");
 }
@@ -109,8 +132,11 @@ export async function POST(request: Request) {
     ].join("\n");
 
     const imageProvider = getImageProvider();
+    const referenceImage = parseDataUrl(normalized.parentImage);
     const result = await imageProvider.generateImage({
       prompt,
+      referenceImageBase64: referenceImage?.base64,
+      referenceImageMimeType: referenceImage?.mimeType,
       aspectRatio: "16:9",
       quality: "preview",
       logId: `visualmap-generate-${Date.now()}`

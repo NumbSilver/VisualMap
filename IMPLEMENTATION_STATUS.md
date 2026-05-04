@@ -15,7 +15,7 @@ Flipbook-style direct generation prototype
 - Center input command for URL or topic.
 - `?url=` query parameter entry.
 - Click-to-drill interaction using normalized image coordinates.
-- Path depth tracking with back navigation.
+- Path depth tracking with back and forward navigation.
 - Mode switch UI for Explain / Explore / Add.
 - Server-side image generation API route.
 - Replaceable model provider abstraction.
@@ -23,6 +23,7 @@ Flipbook-style direct generation prototype
 - ByteDance AIDP image provider for internal demo runs.
 - Mock text provider for open source local runs without secrets.
 - ByteDance AIDP text provider for outline extraction and page planning.
+- Parent image reference is passed on click so providers that support image edit/reference can generate a zoom-in page.
 - Environment variable based provider selection.
 - `.env.example` with non-secret configuration shape.
 
@@ -30,7 +31,6 @@ Flipbook-style direct generation prototype
 
 - Real content crawling and article parsing.
 - VLM-based clicked-region understanding.
-- Parent image reference / image edit flow.
 - Low-quality preview plus high-quality final replacement.
 - Persistent page cache.
 - Share link storage.
@@ -46,7 +46,9 @@ open app
   -> paste URL or topic
   -> generate full-screen visual image
   -> click anywhere on the image
-  -> generate the next deeper visual page
+  -> send the parent image and click coordinates
+  -> generate the next page as a zoom-in attempt around that clicked area
+  -> use back / forward arrows to move through the generated path
 ```
 
 With `IMAGE_PROVIDER=mock` and `TEXT_PROVIDER=mock`, the app runs without any external API key and shows a generated SVG placeholder.
@@ -121,6 +123,8 @@ Effect quality:
 
 ```text
 The image generation path works and returns a real PNG data URL.
+Click drilldown now passes the parent image to the provider and prompts for a close-up zoom-in rather than enriching the old overview.
+Back / forward navigation now preserves history instead of deleting forward pages.
 The experience is visually aligned with the Phase 1 direction, but synchronous waiting is too slow for a polished demo.
 The next speed improvement should move generation into an async job flow and show an immediate interactive skeleton while the image is rendering.
 ```

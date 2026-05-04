@@ -25,6 +25,9 @@ export const mockTextProvider: TextProvider = {
       visualPrompt: [
         title,
         summary,
+        input.clickedCoordinates
+          ? "This is a zoom-in page. Center the composition on the clicked area and reveal details that were not visible before."
+          : "This is the opening overview page.",
         "Create a complete visual knowledge map with a central focus, 4-7 surrounding nodes, elegant labels, and spatial depth."
       ].join("\n"),
       nodes: [
