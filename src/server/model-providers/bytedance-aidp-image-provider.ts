@@ -144,7 +144,8 @@ async function generateFromReference(
     const response = await fetch(url, {
       method: "POST",
       headers: {
-        "X-TT-LOGID": input.logId ?? `visualmap-edit-${Date.now()}`
+        "X-TT-LOGID": input.logId ?? `visualmap-edit-${Date.now()}`,
+        "api-key": ak
       },
       body: form
     });
@@ -158,7 +159,11 @@ async function generateFromReference(
     }
 
     if (!response.ok) {
-      lastError = `${new URL(baseUrl).host}: HTTP ${response.status}`;
+      const message =
+        body && typeof body === "object" && "error" in body
+          ? JSON.stringify(body.error).slice(0, 180)
+          : text.slice(0, 180);
+      lastError = `${new URL(baseUrl).host}: HTTP ${response.status} ${message}`;
       continue;
     }
 
