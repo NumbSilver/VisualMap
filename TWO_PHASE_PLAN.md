@@ -110,7 +110,7 @@ VISION_PROVIDER=custom
 TEXT_PROVIDER=custom
 ```
 
-Demo 阶段默认可以使用 OpenAI Provider，但真实密钥必须由运行者自己提供，不能写入代码或提交到仓库。Provider 设计细节见 `MODEL_PROVIDERS.md`。
+Demo 阶段默认可以使用 OpenAI-compatible Provider。内部 demo 可以优先接 ByteDance AIDP 的 `gpt-image-2` 生图接口；开源用户可以替换为自己的生图模型。真实密钥必须由运行者自己提供，不能写入代码或提交到仓库。Provider 设计细节见 `MODEL_PROVIDERS.md`。
 
 ### 2.4 页面模型
 

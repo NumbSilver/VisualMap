@@ -15,20 +15,40 @@ VisualMap business flow
 
 ## 2. Demo Default
 
-During the demo stage, the default provider can be OpenAI.
+During the demo stage, the default provider is `mock` so the open source project runs without secrets.
+
+For internal demo usage, VisualMap can use the ByteDance AIDP OpenAI-compatible image endpoint. For public open source usage, users can replace it with OpenAI or any custom image model provider.
 
 The project must never commit a real API key. The runtime reads keys from environment variables:
 
 ```text
 OPENAI_API_KEY=...
-IMAGE_PROVIDER=openai
-VISION_PROVIDER=openai
-TEXT_PROVIDER=openai
+IMAGE_PROVIDER=mock
+VISION_PROVIDER=mock
+TEXT_PROVIDER=mock
 ```
 
 The API key must be created by the project runner in their own OpenAI account and configured locally or in their deployment environment.
 
 OpenAI keys are created from the API platform's API key page. For project-scoped usage, create a key in the target project settings and store it securely. The key is shown once when created, so it must be copied into a local secret store or deployment secret manager at creation time.
+
+For ByteDance AIDP demo usage:
+
+```text
+BYTEDANCE_AIDP_AK=...
+BYTEDANCE_AIDP_BASE_URL=https://aidp.bytedance.net/api/modelhub/online/v2/crawl/openai
+BYTEDANCE_AIDP_OFFICE_BASE_URL=https://aidp-i18ntt-sg.tiktok-row.net/api/modelhub/online/v2/crawl/openai
+BYTEDANCE_AIDP_IMAGE_MODEL=gpt-image-2
+IMAGE_PROVIDER=bytedance-aidp
+```
+
+Office network deployments should use the office base URL domain:
+
+```text
+https://aidp-i18ntt-sg.tiktok-row.net
+```
+
+The AK must not be committed. It should be passed as an environment variable and sent server-side only.
 
 ## 3. Provider File Layout
 
@@ -38,9 +58,8 @@ Recommended layout:
 src/server/model-providers/
   index.ts
   types.ts
-  openai-image-provider.ts
-  openai-vision-provider.ts
-  openai-text-provider.ts
+  mock-image-provider.ts
+  bytedance-aidp-image-provider.ts
   custom-image-provider.example.ts
 ```
 
@@ -64,6 +83,27 @@ export interface GenerateImageOutput {
 export interface ImageProvider {
   generateImage(input: GenerateImageInput): Promise<GenerateImageOutput>;
 }
+```
+
+Provider-specific mapping for ByteDance AIDP:
+
+```text
+VisualMap quality preview -> low
+VisualMap quality final   -> high
+
+VisualMap aspectRatio 1:1  -> 1024x1024
+VisualMap aspectRatio 4:3  -> 1536x1024
+VisualMap aspectRatio 16:9 -> 1536x1024
+VisualMap aspectRatio 9:16 -> 1024x1536
+default                    -> auto
+```
+
+The upstream endpoint supports:
+
+```text
+size: 1024x1024, 1536x1024, 1024x1536, auto
+quality: high, medium, low, auto
+model: gpt-image-2
 ```
 
 ```ts
@@ -138,9 +178,11 @@ Provider selection should be centralized:
 
 ```ts
 export function getImageProvider(): ImageProvider {
-  switch (process.env.IMAGE_PROVIDER ?? "openai") {
-    case "openai":
-      return openaiImageProvider;
+  switch (process.env.IMAGE_PROVIDER ?? "mock") {
+    case "bytedance-aidp":
+      return bytedanceAidpImageProvider;
+    case "mock":
+      return mockImageProvider;
     case "custom":
       return customImageProvider;
     default:
@@ -150,3 +192,50 @@ export function getImageProvider(): ImageProvider {
 ```
 
 This keeps the demo simple while preserving model replaceability.
+
+## 8. ByteDance AIDP Image Provider Contract
+
+The ByteDance AIDP provider should live in one file:
+
+```text
+src/server/model-providers/bytedance-aidp-image-provider.ts
+```
+
+It should be responsible for:
+
+- Reading `BYTEDANCE_AIDP_AK`.
+- Selecting `BYTEDANCE_AIDP_BASE_URL`.
+- Mapping VisualMap size and quality values to upstream values.
+- Calling image generation.
+- Returning `imageBase64` or a stored asset URL.
+- Never exposing AK to the browser.
+
+Expected OpenAI-compatible SDK usage:
+
+```ts
+import OpenAI from "openai";
+
+const client = new OpenAI({
+  apiKey: process.env.BYTEDANCE_AIDP_AK,
+  baseURL: process.env.BYTEDANCE_AIDP_BASE_URL,
+});
+
+const result = await client.images.generate({
+  model: process.env.BYTEDANCE_AIDP_IMAGE_MODEL ?? "gpt-image-2",
+  prompt: input.prompt,
+  n: 1,
+  size,
+  quality,
+  extra_headers: {
+    "api-key": process.env.BYTEDANCE_AIDP_AK,
+  },
+});
+```
+
+For image editing, the same provider can later add:
+
+```ts
+editImage(input): Promise<GenerateImageOutput>
+```
+
+using the OpenAI-compatible `images.edit` API with `image[]`, `mask`, `prompt`, `model`, `quality`, `size`, and `n`.
