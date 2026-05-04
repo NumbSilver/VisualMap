@@ -737,6 +737,8 @@ VisualMap 的正确方向是：
 
 完整两阶段方案见 `TWO_PHASE_PLAN.md`。
 
+外部 OpenAPI 和模型调用必须独立在 Provider 模块中，不能散落在业务代码里。Demo 阶段默认可以使用 OpenAI Provider，但密钥只允许通过环境变量读取。Provider 替换规则见 `MODEL_PROVIDERS.md`。
+
 ### Phase 0：本地原型骨架
 
 目标：先证明 VisualMap 不是传统网页，而是打开即画布。

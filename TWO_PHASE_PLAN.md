@@ -60,14 +60,57 @@ VisualMap 不需要一开始就实现完整的确定性知识地图系统。
 用户输入 url
   -> Source Fetcher 抓取内容
   -> LLM 生成页面生成 prompt
-  -> Image Model 生成整张图
+  -> Model Provider 生成整张图
   -> 前端全屏展示图片
   -> 用户点击坐标
   -> 后端把父图 + 点击位置 + 上下文发给 VLM / LLM
   -> 生成下一页 prompt
-  -> Image Model 生成下一张图
+  -> Model Provider 生成下一张图
   -> 缓存并展示
 ```
+
+### 2.3.1 OpenAPI / Model Provider 抽离规则
+
+为了后续开源，所有外部模型调用必须单独抽离到 Provider 文件或模块中，业务代码不能直接调用具体厂商 API。
+
+第一阶段建议先建立统一接口：
+
+```text
+src/server/model-providers/
+  -> index.ts
+  -> types.ts
+  -> openai-image-provider.ts
+  -> openai-vision-provider.ts
+  -> openai-text-provider.ts
+  -> custom-image-provider.example.ts
+```
+
+业务层只能调用统一接口：
+
+```text
+generateImage(input)
+describeClickedRegion(input)
+planNextPage(input)
+```
+
+不能在页面生成、点击下钻、分享逻辑里直接写具体 OpenAPI 请求。
+
+开源用户替换模型时，只需要新增或替换 provider 文件：
+
+```text
+src/server/model-providers/my-image-provider.ts
+```
+
+并通过环境变量切换：
+
+```text
+OPENAI_API_KEY=...
+IMAGE_PROVIDER=custom
+VISION_PROVIDER=custom
+TEXT_PROVIDER=custom
+```
+
+Demo 阶段默认可以使用 OpenAI Provider，但真实密钥必须由运行者自己提供，不能写入代码或提交到仓库。Provider 设计细节见 `MODEL_PROVIDERS.md`。
 
 ### 2.4 页面模型
 
@@ -233,6 +276,8 @@ AI 背景图
 + 分享快照权限
 ```
 
+第二阶段继续沿用第一阶段的 Model Provider 抽象，不允许把新的 LLM、VLM、OCR 或图片模型调用写进业务流程里。
+
 ### 3.4 新增能力
 
 第二阶段新增：
@@ -259,6 +304,19 @@ AI 背景图
 ## 4. 两阶段之间的兼容设计
 
 为了避免第一阶段推倒重来，第一阶段也要保留一些未来接口。
+
+### 4.0 Provider 兼容开源替换
+
+第一阶段就必须把模型调用当成可插拔能力，而不是产品内部实现细节。
+
+```text
+Business Logic
+  -> Model Provider Interface
+  -> Concrete Provider
+  -> External API
+```
+
+这样第二阶段增加 OCR、视觉 QA、文本重写或不同生图模型时，不需要改业务核心。
 
 ### 4.1 Page 兼容 Node
 
