@@ -5,6 +5,10 @@ export interface GenerateImageInput {
   prompt: string;
   referenceImageBase64?: string;
   referenceImageMimeType?: string;
+  referenceClick?: {
+    x: number;
+    y: number;
+  };
   aspectRatio?: VisualMapAspectRatio;
   quality?: VisualMapQuality;
   logId?: string;

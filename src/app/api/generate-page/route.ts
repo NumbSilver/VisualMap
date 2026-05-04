@@ -80,7 +80,7 @@ function buildFallbackImagePrompt(input: GeneratePageRequest) {
     `Mode: ${mode}. Explain should look more source-grounded; Explore can feel more expansive; Add can suggest annotation surfaces.`,
     formatClick(input.click),
     input.parentImage
-      ? "A parent image is provided as visual reference. Preserve its style, but zoom into the clicked region as if entering it."
+      ? "A parent image is provided as visual reference. The clicked area is marked with a red ZOOM HERE ring. Preserve the parent style, but generate the next page as a close-up inside that marked ring. Do not focus on any unmarked area."
       : "No parent image is provided; generate the opening overview.",
     "Compose the image as one complete immersive canvas with a central focus and 4-7 surrounding visual nodes."
   ].join("\n");
@@ -137,6 +137,7 @@ export async function POST(request: Request) {
       prompt,
       referenceImageBase64: referenceImage?.base64,
       referenceImageMimeType: referenceImage?.mimeType,
+      referenceClick: normalized.click,
       aspectRatio: "16:9",
       quality: "preview",
       logId: `visualmap-generate-${Date.now()}`

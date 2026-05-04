@@ -6,6 +6,7 @@ import {
   type VisualMapAspectRatio,
   type VisualMapQuality
 } from "./types";
+import sharp from "sharp";
 
 type AidpSize = "1024x1024" | "1536x1024" | "1024x1536" | "auto";
 type AidpQuality = "high" | "medium" | "low" | "auto";
@@ -83,6 +84,38 @@ function base64ToBlob(base64: string, mimeType = "image/png") {
   return new Blob([bytes], { type: mimeType });
 }
 
+async function markClickedRegion(input: GenerateImageInput) {
+  if (!input.referenceImageBase64 || !input.referenceClick) {
+    return input.referenceImageBase64;
+  }
+
+  const image = Buffer.from(input.referenceImageBase64, "base64");
+  const metadata = await sharp(image).metadata();
+  const width = metadata.width ?? 1536;
+  const height = metadata.height ?? 1024;
+  const cx = Math.round(input.referenceClick.x * width);
+  const cy = Math.round(input.referenceClick.y * height);
+  const radius = Math.round(Math.min(width, height) * 0.07);
+  const stroke = Math.max(8, Math.round(Math.min(width, height) * 0.012));
+  const labelY = Math.max(42, cy - radius - 20);
+
+  const marker = Buffer.from(`
+    <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
+      <circle cx="${cx}" cy="${cy}" r="${radius}" fill="none" stroke="#ff2d2d" stroke-width="${stroke}"/>
+      <circle cx="${cx}" cy="${cy}" r="${Math.max(8, Math.round(stroke * 0.8))}" fill="#ff2d2d"/>
+      <rect x="${Math.max(12, cx - 132)}" y="${labelY - 34}" width="264" height="42" rx="21" fill="#ff2d2d" opacity="0.92"/>
+      <text x="${cx}" y="${labelY - 7}" fill="#ffffff" font-family="Arial, sans-serif" font-size="24" font-weight="700" text-anchor="middle">ZOOM HERE</text>
+    </svg>
+  `);
+
+  const output = await sharp(image)
+    .composite([{ input: marker, left: 0, top: 0 }])
+    .png()
+    .toBuffer();
+
+  return output.toString("base64");
+}
+
 async function generateFromReference(
   input: GenerateImageInput,
   ak: string,
@@ -96,10 +129,11 @@ async function generateFromReference(
   for (const baseUrl of getCandidateEditBaseUrls()) {
     const url = `${baseUrl}/images/edits?ak=${encodeURIComponent(ak)}`;
     const form = new FormData();
+    const markedReference = await markClickedRegion(input);
     form.append(
       "image[]",
-      base64ToBlob(input.referenceImageBase64, input.referenceImageMimeType),
-      "parent.png"
+      base64ToBlob(markedReference ?? input.referenceImageBase64, "image/png"),
+      "parent-marked.png"
     );
     form.append("prompt", input.prompt);
     form.append("model", model);
