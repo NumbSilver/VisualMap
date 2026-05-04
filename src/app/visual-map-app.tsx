@@ -3,7 +3,8 @@
 import { MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
-type Mode = "explain" | "explore" | "add";
+type ResolvedMode = "explain" | "explore" | "add";
+type Mode = ResolvedMode | "auto";
 
 interface GeneratedPage {
   id: string;
@@ -11,7 +12,8 @@ interface GeneratedPage {
   productImageUrl?: string;
   source: string;
   depth: number;
-  mode: Mode;
+  mode: ResolvedMode;
+  requestedMode?: Mode;
   image: string;
   provider: string;
   model: string;
@@ -31,6 +33,7 @@ interface GenerationResponse extends GeneratedPage {
 }
 
 const modeLabels: Record<Mode, string> = {
+  auto: "Auto",
   explain: "Explain",
   explore: "Explore",
   add: "Add"
@@ -54,7 +57,7 @@ export function VisualMapApp() {
   const searchParams = useSearchParams();
   const initialSource = useMemo(() => getInitialSource(searchParams), [searchParams]);
   const [source, setSource] = useState(initialSource);
-  const [mode, setMode] = useState<Mode>("explore");
+  const [mode, setMode] = useState<Mode>("auto");
   const [pages, setPages] = useState<GeneratedPage[]>([]);
   const [currentIndex, setCurrentIndex] = useState(-1);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -84,7 +87,7 @@ export function VisualMapApp() {
           body: JSON.stringify({
             source: trimmedSource,
             depth: isDrilldown ? activePath.length : 0,
-            path: activePath.map((page) => `${page.mode}:${page.id}`),
+          path: activePath.map((page) => `${page.mode}:${page.id}`),
             click: options?.click,
             parentImage: isDrilldown ? currentPage?.image : undefined,
             parentProductId: isDrilldown ? currentPage?.productId : null,
@@ -250,6 +253,14 @@ export function VisualMapApp() {
             <div>
               <dt>Product</dt>
               <dd>{currentPage.productId ?? "unsaved"}</dd>
+            </div>
+            <div>
+              <dt>Mode</dt>
+              <dd>
+                {currentPage.requestedMode === "auto" || !currentPage.requestedMode
+                  ? `Auto → ${currentPage.mode}`
+                  : currentPage.mode}
+              </dd>
             </div>
             <div>
               <dt>Provider</dt>

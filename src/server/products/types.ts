@@ -3,6 +3,7 @@ export interface ProductRecord {
   source: string;
   depth: number;
   mode: "explain" | "explore" | "add";
+  requestedMode?: "auto" | "explain" | "explore" | "add";
   imagePath: string;
   imageUrl: string;
   prompt: string;

@@ -25,6 +25,7 @@ export async function saveProduct(input: {
   source: string;
   depth: number;
   mode: ProductRecord["mode"];
+  requestedMode?: ProductRecord["requestedMode"];
   imageBase64: string;
   mimeType: string;
   prompt: string;
@@ -51,6 +52,7 @@ export async function saveProduct(input: {
     source: input.source,
     depth: input.depth,
     mode: input.mode,
+    requestedMode: input.requestedMode,
     imagePath,
     imageUrl: `/api/products/${id}/image`,
     prompt: input.prompt,

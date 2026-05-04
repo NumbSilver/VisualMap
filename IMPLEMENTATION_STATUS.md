@@ -16,7 +16,8 @@ Flipbook-style direct generation prototype
 - `?url=` query parameter entry.
 - Click-to-drill interaction using normalized image coordinates.
 - Path depth tracking with back and forward navigation.
-- Mode switch UI for Explain / Explore / Add.
+- Mode switch UI for Auto / Explain / Explore / Add.
+- Auto mode selection: short questions default to Explore, long documents default to Explain, and deeper drilldowns can fall back to Explore.
 - Server-side image generation API route.
 - Replaceable model provider abstraction.
 - Mock image provider for open source local runs without secrets.
@@ -60,6 +61,8 @@ With `IMAGE_PROVIDER=mock` and `TEXT_PROVIDER=mock`, the app runs without any ex
 With `IMAGE_PROVIDER=bytedance-aidp` and `BYTEDANCE_AIDP_AK` configured, the app calls the ByteDance AIDP OpenAI-compatible `gpt-image-2` endpoint and renders real generated images.
 
 With `TEXT_PROVIDER=bytedance-aidp` and `BYTEDANCE_AIDP_TEXT_API_KEY` configured, the app calls the ByteDance AIDP OpenAI-compatible `gpt-5.4-2026-03-05` endpoint to produce the page title, summary, nodes, and visual prompt before image generation.
+
+The default UI mode is `Auto`. Users can still force Explain, Explore, or Add when they want direct control.
 
 ## How To Run
 
@@ -127,6 +130,7 @@ Effect quality:
 
 ```text
 The image generation path works and returns a real PNG data URL.
+Auto mode behavior: short question -> Explore, long document -> Explain, depth >= 2 -> Explore fallback.
 Click drilldown now passes a marked parent image to the provider and prompts for a close-up zoom-in rather than enriching the old overview.
 Back / forward navigation now preserves history instead of deleting forward pages.
 Each generated page is saved under data/products/<productId>/ with image and metadata.

@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { getImageProvider, getTextProvider } from "@/server/model-providers";
 import { ProviderConfigurationError } from "@/server/model-providers/types";
+import {
+  resolveMode,
+  type RequestedMode,
+  type ResolvedMode
+} from "@/server/mode/resolve-mode";
 import { readProductImageBase64, saveProduct } from "@/server/products/store";
 
 export const runtime = "nodejs";
@@ -15,7 +20,7 @@ interface GeneratePageRequest {
   };
   parentImage?: string;
   parentProductId?: string | null;
-  mode?: "explain" | "explore" | "add";
+  mode?: RequestedMode;
 }
 
 function isUrl(value: string) {
@@ -83,7 +88,11 @@ async function getReferenceImage(input: GeneratePageRequest) {
 
 function buildFallbackImagePrompt(input: GeneratePageRequest) {
   const depth = input.depth ?? 0;
-  const mode = input.mode ?? "explore";
+  const mode = resolveMode({
+    source: input.source,
+    depth: input.depth,
+    requestedMode: input.mode
+  });
   const path = input.path?.length ? input.path.join(" / ") : "root";
   const sourceSummary = summarizeSource(input.source);
 
@@ -134,7 +143,11 @@ export async function POST(request: Request) {
       sourceSummary: summarizeSource(normalized.source),
       currentPath: normalized.path ?? [],
       clickedCoordinates: normalized.click,
-      mode: normalized.mode ?? "explore",
+      mode: resolveMode({
+        source: normalized.source,
+        depth: normalized.depth,
+        requestedMode: normalized.mode
+      }),
       depth: normalized.depth ?? 0
     });
 
@@ -164,7 +177,12 @@ export async function POST(request: Request) {
     const product = await saveProduct({
       source: normalized.source,
       depth: normalized.depth ?? 0,
-      mode: normalized.mode ?? "explore",
+      mode: resolveMode({
+        source: normalized.source,
+        depth: normalized.depth,
+        requestedMode: normalized.mode
+      }),
+      requestedMode: normalized.mode ?? "auto",
       imageBase64: result.imageBase64,
       mimeType: result.mimeType,
       prompt,
@@ -186,7 +204,12 @@ export async function POST(request: Request) {
       source: normalized.source,
       depth: normalized.depth ?? 0,
       click: normalized.click ?? null,
-      mode: normalized.mode ?? "explore",
+      mode: resolveMode({
+        source: normalized.source,
+        depth: normalized.depth,
+        requestedMode: normalized.mode
+      }),
+      requestedMode: normalized.mode ?? "auto",
       image: product.imageUrl,
       provider: result.provider,
       model: result.model,
