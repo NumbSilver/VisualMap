@@ -84,7 +84,7 @@ function base64ToBlob(base64: string, mimeType = "image/png") {
   return new Blob([bytes], { type: mimeType });
 }
 
-async function markClickedRegion(input: GenerateImageInput) {
+async function buildZoomReferenceImage(input: GenerateImageInput) {
   if (!input.referenceImageBase64 || !input.referenceClick) {
     return input.referenceImageBase64;
   }
@@ -93,14 +93,22 @@ async function markClickedRegion(input: GenerateImageInput) {
   const metadata = await sharp(image).metadata();
   const width = metadata.width ?? 1536;
   const height = metadata.height ?? 1024;
-  const cx = Math.round(input.referenceClick.x * width);
-  const cy = Math.round(input.referenceClick.y * height);
-  const radius = Math.round(Math.min(width, height) * 0.07);
-  const stroke = Math.max(8, Math.round(Math.min(width, height) * 0.012));
-  const labelY = Math.max(42, cy - radius - 20);
+  const sourceCx = Math.round(input.referenceClick.x * width);
+  const sourceCy = Math.round(input.referenceClick.y * height);
+  const cropSize = Math.round(Math.min(width, height) * 0.42);
+  const left = Math.max(0, Math.min(width - cropSize, sourceCx - cropSize / 2));
+  const top = Math.max(0, Math.min(height - cropSize, sourceCy - cropSize / 2));
+  const outputWidth = width;
+  const outputHeight = height;
+  const cx = Math.round(outputWidth / 2);
+  const cy = Math.round(outputHeight / 2);
+  const radius = Math.round(Math.min(outputWidth, outputHeight) * 0.16);
+  const stroke = Math.max(10, Math.round(Math.min(outputWidth, outputHeight) * 0.012));
+  const labelY = Math.max(58, cy - radius - 26);
 
   const marker = Buffer.from(`
-    <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
+    <svg xmlns="http://www.w3.org/2000/svg" width="${outputWidth}" height="${outputHeight}">
+      <rect x="0" y="0" width="${outputWidth}" height="${outputHeight}" fill="none" stroke="#ffcc00" stroke-width="${stroke * 1.5}"/>
       <circle cx="${cx}" cy="${cy}" r="${radius}" fill="none" stroke="#ff2d2d" stroke-width="${stroke}"/>
       <circle cx="${cx}" cy="${cy}" r="${Math.max(8, Math.round(stroke * 0.8))}" fill="#ff2d2d"/>
       <rect x="${Math.max(12, cx - 132)}" y="${labelY - 34}" width="264" height="42" rx="21" fill="#ff2d2d" opacity="0.92"/>
@@ -109,6 +117,13 @@ async function markClickedRegion(input: GenerateImageInput) {
   `);
 
   const output = await sharp(image)
+    .extract({
+      left: Math.round(left),
+      top: Math.round(top),
+      width: cropSize,
+      height: cropSize
+    })
+    .resize(outputWidth, outputHeight, { fit: "cover" })
     .composite([{ input: marker, left: 0, top: 0 }])
     .png()
     .toBuffer();
@@ -129,7 +144,7 @@ async function generateFromReference(
   for (const baseUrl of getCandidateEditBaseUrls()) {
     const url = `${baseUrl}/images/edits?ak=${encodeURIComponent(ak)}`;
     const form = new FormData();
-    const markedReference = await markClickedRegion(input);
+    const markedReference = await buildZoomReferenceImage(input);
     form.append(
       "image[]",
       base64ToBlob(markedReference ?? input.referenceImageBase64, "image/png"),

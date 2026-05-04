@@ -26,7 +26,7 @@ Flipbook-style direct generation prototype
 - ByteDance AIDP text provider for outline extraction and page planning.
 - URL Source Fetcher for readable HTML/article extraction before planning.
 - Parent image reference is passed on click so providers that support image edit/reference can generate a zoom-in page.
-- Clicked regions are now visually marked with a red `ZOOM HERE` ring before image edit, so the model sees the target area instead of relying only on coordinates.
+- Clicked regions are converted into a cropped, enlarged reference image and marked with a red `ZOOM HERE` ring before image edit, so the model focuses on the local target instead of re-summarizing the full map.
 - Every generated page is automatically saved as a local Product with image asset and JSON metadata.
 - Environment variable based provider selection.
 - `.env.example` with non-secret configuration shape.
@@ -135,7 +135,7 @@ Effect quality:
 The image generation path works and returns a real PNG data URL.
 URL content is now parsed before planning; tested WeChat URL extraction returned the article title and about 12k characters of readable text in local source-fetcher verification.
 Auto mode behavior: short question -> Explore, long document -> Explain, depth >= 2 -> Explore fallback.
-Click drilldown now passes a marked parent image to the provider and prompts for a close-up zoom-in rather than enriching the old overview.
+Click drilldown now passes a cropped and marked parent image to the provider and prompts for a close-up zoom-in rather than enriching the old overview.
 Back / forward navigation now preserves history instead of deleting forward pages.
 Each generated page is saved under data/products/<productId>/ with image and metadata.
 The experience is visually aligned with the Phase 1 direction, but synchronous waiting is too slow for a polished demo.
