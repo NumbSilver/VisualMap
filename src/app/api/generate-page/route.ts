@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getImageProvider, getTextProvider } from "@/server/model-providers";
 import { ProviderConfigurationError } from "@/server/model-providers/types";
+import { readProductImageBase64, saveProduct } from "@/server/products/store";
 
 export const runtime = "nodejs";
 
@@ -13,6 +14,7 @@ interface GeneratePageRequest {
     y: number;
   };
   parentImage?: string;
+  parentProductId?: string | null;
   mode?: "explain" | "explore" | "add";
 }
 
@@ -60,6 +62,23 @@ function parseDataUrl(dataUrl?: string) {
     mimeType: match[1],
     base64: match[2]
   };
+}
+
+async function getReferenceImage(input: GeneratePageRequest) {
+  const dataUrlReference = parseDataUrl(input.parentImage);
+  if (dataUrlReference) {
+    return dataUrlReference;
+  }
+
+  if (input.parentProductId) {
+    try {
+      return await readProductImageBase64(input.parentProductId);
+    } catch {
+      return undefined;
+    }
+  }
+
+  return undefined;
 }
 
 function buildFallbackImagePrompt(input: GeneratePageRequest) {
@@ -132,7 +151,7 @@ export async function POST(request: Request) {
     ].join("\n");
 
     const imageProvider = getImageProvider();
-    const referenceImage = parseDataUrl(normalized.parentImage);
+    const referenceImage = await getReferenceImage(normalized);
     const result = await imageProvider.generateImage({
       prompt,
       referenceImageBase64: referenceImage?.base64,
@@ -142,16 +161,33 @@ export async function POST(request: Request) {
       quality: "preview",
       logId: `visualmap-generate-${Date.now()}`
     });
+    const product = await saveProduct({
+      source: normalized.source,
+      depth: normalized.depth ?? 0,
+      mode: normalized.mode ?? "explore",
+      imageBase64: result.imageBase64,
+      mimeType: result.mimeType,
+      prompt,
+      provider: result.provider,
+      model: result.model,
+      textProvider: plan.provider,
+      textModel: plan.model,
+      parentProductId: normalized.parentProductId ?? null,
+      click: normalized.click ?? null,
+      plan
+    });
 
     return NextResponse.json({
       id: `page_${Date.now()}`,
+      productId: product.id,
+      productImageUrl: product.imageUrl,
       prompt,
       plan,
       source: normalized.source,
       depth: normalized.depth ?? 0,
       click: normalized.click ?? null,
       mode: normalized.mode ?? "explore",
-      image: `data:${result.mimeType};base64,${result.imageBase64}`,
+      image: product.imageUrl,
       provider: result.provider,
       model: result.model,
       textProvider: plan.provider,

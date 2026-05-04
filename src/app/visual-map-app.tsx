@@ -7,6 +7,8 @@ type Mode = "explain" | "explore" | "add";
 
 interface GeneratedPage {
   id: string;
+  productId?: string;
+  productImageUrl?: string;
   source: string;
   depth: number;
   mode: Mode;
@@ -85,6 +87,7 @@ export function VisualMapApp() {
             path: activePath.map((page) => `${page.mode}:${page.id}`),
             click: options?.click,
             parentImage: isDrilldown ? currentPage?.image : undefined,
+            parentProductId: isDrilldown ? currentPage?.productId : null,
             mode: options?.nextMode ?? mode
           })
         });
@@ -243,6 +246,10 @@ export function VisualMapApp() {
               <dd>
                 {currentIndex + 1}/{pages.length}
               </dd>
+            </div>
+            <div>
+              <dt>Product</dt>
+              <dd>{currentPage.productId ?? "unsaved"}</dd>
             </div>
             <div>
               <dt>Provider</dt>

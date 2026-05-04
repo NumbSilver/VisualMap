@@ -25,6 +25,7 @@ Flipbook-style direct generation prototype
 - ByteDance AIDP text provider for outline extraction and page planning.
 - Parent image reference is passed on click so providers that support image edit/reference can generate a zoom-in page.
 - Clicked regions are now visually marked with a red `ZOOM HERE` ring before image edit, so the model sees the target area instead of relying only on coordinates.
+- Every generated page is automatically saved as a local Product with image asset and JSON metadata.
 - Environment variable based provider selection.
 - `.env.example` with non-secret configuration shape.
 
@@ -33,7 +34,8 @@ Flipbook-style direct generation prototype
 - Real content crawling and article parsing.
 - VLM-based clicked-region understanding.
 - Low-quality preview plus high-quality final replacement.
-- Persistent page cache.
+- Product list UI and Product detail page.
+- Persistent page cache beyond local Product files.
 - Share link storage.
 - Add annotation persistence.
 - Deterministic DOM / SVG text overlay system.
@@ -49,6 +51,7 @@ open app
   -> click anywhere on the image
   -> send the parent image and click coordinates
   -> generate the next page as a zoom-in attempt around that clicked area
+  -> save every generated result as a Product
   -> use back / forward arrows to move through the generated path
 ```
 
@@ -126,6 +129,7 @@ Effect quality:
 The image generation path works and returns a real PNG data URL.
 Click drilldown now passes a marked parent image to the provider and prompts for a close-up zoom-in rather than enriching the old overview.
 Back / forward navigation now preserves history instead of deleting forward pages.
+Each generated page is saved under data/products/<productId>/ with image and metadata.
 The experience is visually aligned with the Phase 1 direction, but synchronous waiting is too slow for a polished demo.
 The next speed improvement should move generation into an async job flow and show an immediate interactive skeleton while the image is rendering.
 ```

@@ -3,6 +3,7 @@
 .env.local
 .env.*.local
 generated/
+data/products/
 .next/
 node_modules/
 node-compile-cache/
