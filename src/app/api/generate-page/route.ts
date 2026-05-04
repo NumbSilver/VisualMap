@@ -7,6 +7,10 @@ import {
   type ResolvedMode
 } from "@/server/mode/resolve-mode";
 import { readProductImageBase64, saveProduct } from "@/server/products/store";
+import {
+  resolveSourceContent,
+  sourceSummaryForPlanning
+} from "@/server/sources/fetch-source";
 
 export const runtime = "nodejs";
 
@@ -21,23 +25,6 @@ interface GeneratePageRequest {
   parentImage?: string;
   parentProductId?: string | null;
   mode?: RequestedMode;
-}
-
-function isUrl(value: string) {
-  try {
-    const url = new URL(value);
-    return url.protocol === "http:" || url.protocol === "https:";
-  } catch {
-    return false;
-  }
-}
-
-function summarizeSource(source: string) {
-  if (isUrl(source)) {
-    return `the content, topic, and context represented by this URL: ${source}`;
-  }
-
-  return source.length > 1200 ? `${source.slice(0, 1200)}...` : source;
 }
 
 function formatClick(click: GeneratePageRequest["click"]) {
@@ -86,15 +73,14 @@ async function getReferenceImage(input: GeneratePageRequest) {
   return undefined;
 }
 
-function buildFallbackImagePrompt(input: GeneratePageRequest) {
+function buildFallbackImagePrompt(input: GeneratePageRequest, sourceSummary: string) {
   const depth = input.depth ?? 0;
   const mode = resolveMode({
-    source: input.source,
+    source: sourceSummary,
     depth: input.depth,
     requestedMode: input.mode
   });
   const path = input.path?.length ? input.path.join(" / ") : "root";
-  const sourceSummary = summarizeSource(input.source);
 
   return [
     "Create a full-screen, fancy, image-first visual knowledge map.",
@@ -137,14 +123,28 @@ export async function POST(request: Request) {
       source: body.source.trim(),
       click: normalizeClick(body.click)
     };
+    const sourceContent = await resolveSourceContent(normalized.source);
+    if (sourceContent.isUrl && !sourceContent.ok) {
+      return NextResponse.json(
+        {
+          error:
+            sourceContent.error ??
+            "Could not parse enough readable content from this URL.",
+          sourceStatus: sourceContent
+        },
+        { status: 422 }
+      );
+    }
+
     const textProvider = getTextProvider();
+    const sourceSummary = sourceSummaryForPlanning(sourceContent);
     const plan = await textProvider.planNextPage({
       source: normalized.source,
-      sourceSummary: summarizeSource(normalized.source),
+      sourceSummary,
       currentPath: normalized.path ?? [],
       clickedCoordinates: normalized.click,
       mode: resolveMode({
-        source: normalized.source,
+        source: sourceSummary,
         depth: normalized.depth,
         requestedMode: normalized.mode
       }),
@@ -152,7 +152,7 @@ export async function POST(request: Request) {
     });
 
     const prompt = [
-      buildFallbackImagePrompt(normalized),
+      buildFallbackImagePrompt(normalized, sourceSummary),
       "",
       "Page plan:",
       `Title: ${plan.title}`,
@@ -176,9 +176,16 @@ export async function POST(request: Request) {
     });
     const product = await saveProduct({
       source: normalized.source,
+      sourceStatus: {
+        isUrl: sourceContent.isUrl,
+        ok: sourceContent.ok,
+        title: sourceContent.title,
+        description: sourceContent.description,
+        textLength: sourceContent.text.length
+      },
       depth: normalized.depth ?? 0,
       mode: resolveMode({
-        source: normalized.source,
+        source: sourceSummary,
         depth: normalized.depth,
         requestedMode: normalized.mode
       }),
@@ -205,7 +212,7 @@ export async function POST(request: Request) {
       depth: normalized.depth ?? 0,
       click: normalized.click ?? null,
       mode: resolveMode({
-        source: normalized.source,
+        source: sourceSummary,
         depth: normalized.depth,
         requestedMode: normalized.mode
       }),

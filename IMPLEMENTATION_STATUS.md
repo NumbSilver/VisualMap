@@ -24,6 +24,7 @@ Flipbook-style direct generation prototype
 - ByteDance AIDP image provider for internal demo runs.
 - Mock text provider for open source local runs without secrets.
 - ByteDance AIDP text provider for outline extraction and page planning.
+- URL Source Fetcher for readable HTML/article extraction before planning.
 - Parent image reference is passed on click so providers that support image edit/reference can generate a zoom-in page.
 - Clicked regions are now visually marked with a red `ZOOM HERE` ring before image edit, so the model sees the target area instead of relying only on coordinates.
 - Every generated page is automatically saved as a local Product with image asset and JSON metadata.
@@ -32,7 +33,7 @@ Flipbook-style direct generation prototype
 
 ## Not Implemented Yet
 
-- Real content crawling and article parsing.
+- Robust content extraction for pages that require login, browser verification, or dynamic rendering.
 - VLM-based clicked-region understanding.
 - Low-quality preview plus high-quality final replacement.
 - Product list UI and Product detail page.
@@ -63,6 +64,8 @@ With `IMAGE_PROVIDER=bytedance-aidp` and `BYTEDANCE_AIDP_AK` configured, the app
 With `TEXT_PROVIDER=bytedance-aidp` and `BYTEDANCE_AIDP_TEXT_API_KEY` configured, the app calls the ByteDance AIDP OpenAI-compatible `gpt-5.4-2026-03-05` endpoint to produce the page title, summary, nodes, and visual prompt before image generation.
 
 The default UI mode is `Auto`. Users can still force Explain, Explore, or Add when they want direct control.
+
+When the input is a URL, the server now attempts to fetch and extract readable article text before planning. If extraction fails, generation is blocked instead of producing an unrelated generic image.
 
 ## How To Run
 
@@ -130,6 +133,7 @@ Effect quality:
 
 ```text
 The image generation path works and returns a real PNG data URL.
+URL content is now parsed before planning; tested WeChat URL extraction returned the article title and about 12k characters of readable text in local source-fetcher verification.
 Auto mode behavior: short question -> Explore, long document -> Explain, depth >= 2 -> Explore fallback.
 Click drilldown now passes a marked parent image to the provider and prompts for a close-up zoom-in rather than enriching the old overview.
 Back / forward navigation now preserves history instead of deleting forward pages.

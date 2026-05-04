@@ -23,6 +23,7 @@ function extensionForMime(mimeType: string) {
 
 export async function saveProduct(input: {
   source: string;
+  sourceStatus?: ProductRecord["sourceStatus"];
   depth: number;
   mode: ProductRecord["mode"];
   requestedMode?: ProductRecord["requestedMode"];
@@ -50,6 +51,7 @@ export async function saveProduct(input: {
   const record: ProductRecord = {
     id,
     source: input.source,
+    sourceStatus: input.sourceStatus,
     depth: input.depth,
     mode: input.mode,
     requestedMode: input.requestedMode,

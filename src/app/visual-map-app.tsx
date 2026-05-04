@@ -19,6 +19,13 @@ interface GeneratedPage {
   model: string;
   textProvider?: string;
   textModel?: string;
+  sourceStatus?: {
+    isUrl: boolean;
+    ok: boolean;
+    title?: string;
+    description?: string;
+    textLength: number;
+  };
   plan?: {
     title: string;
     summary: string;
@@ -254,6 +261,16 @@ export function VisualMapApp() {
               <dt>Product</dt>
               <dd>{currentPage.productId ?? "unsaved"}</dd>
             </div>
+            {currentPage.sourceStatus?.isUrl ? (
+              <div>
+                <dt>Source</dt>
+                <dd>
+                  {currentPage.sourceStatus.ok
+                    ? `${currentPage.sourceStatus.textLength} chars`
+                    : "unparsed"}
+                </dd>
+              </div>
+            ) : null}
             <div>
               <dt>Mode</dt>
               <dd>

@@ -1,6 +1,13 @@
 export interface ProductRecord {
   id: string;
   source: string;
+  sourceStatus?: {
+    isUrl: boolean;
+    ok: boolean;
+    title?: string;
+    description?: string;
+    textLength: number;
+  };
   depth: number;
   mode: "explain" | "explore" | "add";
   requestedMode?: "auto" | "explain" | "explore" | "add";
