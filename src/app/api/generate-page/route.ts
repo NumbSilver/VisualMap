@@ -37,8 +37,9 @@ function formatClick(click: GeneratePageRequest["click"]) {
     `The user clicked normalized coordinates x=${click.x.toFixed(2)}, y=${click.y.toFixed(2)}.`,
     "The reference image has already been cropped around the clicked region and enlarged.",
     "The next image must feel like the camera zoomed further into that exact local crop.",
-    "Do not merely add more objects to the old composition.",
-    "Replace the old overview with a close-up scene centered on the clicked area, revealing finer details, labels, and micro-structure."
+    "Make the semantic level obviously deeper: show sub-parts, mechanism, examples, edge cases, annotations, or step-by-step internals that were not visible before.",
+    "Do not merely add more objects to the old composition or create another overview.",
+    "Replace the old overview with a close-up educational plate centered on the clicked area, revealing finer details, labels, and micro-structure."
   ].join(" ");
 }
 
@@ -97,9 +98,11 @@ function buildFallbackImagePrompt(input: GeneratePageRequest, sourceSummary: str
     `Mode: ${mode}. Explain should look more source-grounded; Explore can feel more expansive; Add can suggest annotation surfaces.`,
     formatClick(input.click),
     input.parentImage
-      ? "A cropped parent image is provided as visual reference. It is centered on the clicked area and marked with a red ZOOM HERE ring. Preserve the parent style, but generate the next page as a close-up inside that marked ring. Do not reconstruct the whole original map."
+      ? "A cropped parent image is provided as visual reference. It is centered on the clicked area and marked with a red ZOOM HERE ring. Preserve the parent style, but generate the next page as a close-up detail plate inside that marked ring. Do not reconstruct the whole original map, and do not keep the same overview-level layout."
       : "No parent image is provided; generate the opening overview.",
-    "Compose the image as one complete light hand-drawn infographic canvas with a central focus and 4-7 surrounding visual nodes."
+    depth > 0
+      ? "Compose the image as a focused close-up: one large selected concept plus 3-5 smaller sub-detail panels, labels, or mechanism sketches."
+      : "Compose the image as one complete light hand-drawn infographic canvas with a central focus and 4-7 surrounding visual nodes."
   ].join("\n");
 }
 
@@ -209,6 +212,7 @@ export async function POST(request: Request) {
       id: `page_${Date.now()}`,
       productId: product.id,
       productImageUrl: product.imageUrl,
+      parentProductId: normalized.parentProductId ?? null,
       prompt,
       plan,
       source: normalized.source,

@@ -141,13 +141,36 @@ a {
 
 .top-controls,
 .source-command,
-.status-panel {
+.status-panel,
+.visibility-toggle {
   position: absolute;
   z-index: 5;
   border: 1px solid var(--line);
   background: var(--panel);
   backdrop-filter: blur(22px);
   box-shadow: 0 20px 70px rgba(71, 58, 30, 0.26);
+}
+
+.visibility-toggle {
+  top: 20px;
+  right: 370px;
+  min-height: 38px;
+  padding: 0 16px;
+  border-radius: 999px;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.visibility-toggle.hidden {
+  right: 20px;
+  background: rgba(255, 251, 241, 0.28);
+  opacity: 0.16;
+  transition: opacity 160ms ease;
+}
+
+.visibility-toggle.hidden:hover {
+  opacity: 0.88;
 }
 
 .top-controls {
@@ -246,6 +269,37 @@ a {
   width: min(330px, calc(100vw - 40px));
   padding: 18px;
   border-radius: 20px;
+}
+
+.drill-marker-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.drill-marker {
+  position: absolute;
+  width: 42px;
+  height: 42px;
+  border: 2px solid rgba(74, 82, 68, 0.72);
+  border-radius: 999px;
+  background: rgba(255, 249, 232, 0.92);
+  box-shadow:
+    0 8px 28px rgba(85, 70, 38, 0.18),
+    inset 0 0 0 4px rgba(139, 216, 200, 0.24);
+  color: #2e342f;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: auto;
+  transform: translate(-50%, -50%);
+}
+
+.drill-marker:hover {
+  background: #fff4cf;
+  transform: translate(-50%, -50%) scale(1.08);
 }
 
 .status-panel strong {
@@ -362,6 +416,16 @@ a {
     bottom: 96px;
     left: 14px;
     width: auto;
+  }
+
+  .visibility-toggle {
+    top: 84px;
+    right: 14px;
+  }
+
+  .visibility-toggle.hidden {
+    top: 14px;
+    right: 14px;
   }
 
   .source-command {

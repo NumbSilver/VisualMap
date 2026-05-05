@@ -135,11 +135,13 @@ Effect quality:
 ```text
 The image generation path works and returns a real PNG data URL.
 URL content is now parsed before planning; tested WeChat URL extraction returned the article title and about 12k characters of readable text in local source-fetcher verification.
-The default generation style is now constrained toward light hand-drawn infographic, off-white paper, soft watercolor, pastel palette, and away from dark cinematic fantasy-map aesthetics.
+The default generation style is now constrained toward a premium hand-drawn educational infographic plate: ivory paper, graphite outlines, watercolor/colored-pencil fills, field-guide panels, leader lines, numbered callouts, and no dark cinematic fantasy-map aesthetics.
 Auto mode behavior: short question -> Explore, long document -> Explain, depth >= 2 -> Explore fallback.
-Click drilldown now passes a cropped and marked parent image to the provider and prompts for a close-up zoom-in rather than enriching the old overview.
+Click drilldown now passes a cropped and marked parent image to the provider and prompts for a close-up detail plate with sub-parts, mechanism diagrams, examples, or internal structure instead of another overview-level layout.
 Back / forward navigation now preserves history instead of deleting forward pages.
 Each generated page is saved under data/products/<productId>/ with image and metadata.
+The UI now has a Hide control that collapses mode buttons, command input, and the status panel so only the generated image remains, with a subtle Show affordance to restore controls.
+Parent pages now show numbered drill markers at clicked positions for generated child pages, so the global view can reveal where deeper content lives without regenerating a denser overview image.
 The experience is visually aligned with the Phase 1 direction, but synchronous waiting is too slow for a polished demo.
 The next speed improvement should move generation into an async job flow and show an immediate interactive skeleton while the image is rendering.
 ```
