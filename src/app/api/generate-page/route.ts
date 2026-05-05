@@ -11,6 +11,7 @@ import {
   resolveSourceContent,
   sourceSummaryForPlanning
 } from "@/server/sources/fetch-source";
+import { VISUAL_STYLE_CONTRACT } from "@/server/style/visual-style";
 
 export const runtime = "nodejs";
 
@@ -84,9 +85,10 @@ function buildFallbackImagePrompt(input: GeneratePageRequest, sourceSummary: str
   const path = input.path?.length ? input.path.join(" / ") : "root";
 
   return [
-    "Create a full-screen, fancy, image-first visual knowledge map.",
-    "The result should feel like an interactive generated visual browser, not a traditional website, not a SaaS landing page, and not a dashboard.",
-    "Use a cinematic illustrated infographic style with rich spatial depth, coherent visual nodes, connective paths, and readable short labels.",
+    "Create a full-screen, image-first visual knowledge map.",
+    VISUAL_STYLE_CONTRACT,
+    "The result should feel like an interactive hand-drawn explainer, not a traditional website, not a SaaS landing page, and not a dashboard.",
+    "Use coherent visual nodes, simple connective paths, and readable short labels.",
     "Keep text short, large, and clean. Avoid long paragraphs. Avoid tiny text.",
     "No navigation bar, no pricing section, no website chrome, no browser mockup.",
     `Source to visualize: ${sourceSummary}`,
@@ -97,7 +99,7 @@ function buildFallbackImagePrompt(input: GeneratePageRequest, sourceSummary: str
     input.parentImage
       ? "A cropped parent image is provided as visual reference. It is centered on the clicked area and marked with a red ZOOM HERE ring. Preserve the parent style, but generate the next page as a close-up inside that marked ring. Do not reconstruct the whole original map."
       : "No parent image is provided; generate the opening overview.",
-    "Compose the image as one complete immersive canvas with a central focus and 4-7 surrounding visual nodes."
+    "Compose the image as one complete light hand-drawn infographic canvas with a central focus and 4-7 surrounding visual nodes."
   ].join("\n");
 }
 

@@ -25,6 +25,7 @@ Flipbook-style direct generation prototype
 - Mock text provider for open source local runs without secrets.
 - ByteDance AIDP text provider for outline extraction and page planning.
 - URL Source Fetcher for readable HTML/article extraction before planning.
+- Global visual style contract for light hand-drawn infographic generation.
 - Parent image reference is passed on click so providers that support image edit/reference can generate a zoom-in page.
 - Clicked regions are converted into a cropped, enlarged reference image and marked with a red `ZOOM HERE` ring before image edit, so the model focuses on the local target instead of re-summarizing the full map.
 - Every generated page is automatically saved as a local Product with image asset and JSON metadata.
@@ -134,6 +135,7 @@ Effect quality:
 ```text
 The image generation path works and returns a real PNG data URL.
 URL content is now parsed before planning; tested WeChat URL extraction returned the article title and about 12k characters of readable text in local source-fetcher verification.
+The default generation style is now constrained toward light hand-drawn infographic, off-white paper, soft watercolor, pastel palette, and away from dark cinematic fantasy-map aesthetics.
 Auto mode behavior: short question -> Explore, long document -> Explain, depth >= 2 -> Explore fallback.
 Click drilldown now passes a cropped and marked parent image to the provider and prompts for a close-up zoom-in rather than enriching the old overview.
 Back / forward navigation now preserves history instead of deleting forward pages.

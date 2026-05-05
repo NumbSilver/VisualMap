@@ -4,6 +4,7 @@ import {
   type PlanNextPageOutput,
   type TextProvider
 } from "./types";
+import { VISUAL_STYLE_CONTRACT } from "@/server/style/visual-style";
 
 interface ChatCompletionChoice {
   message?: {
@@ -53,7 +54,8 @@ function buildPlanningPrompt(input: PlanNextPageInput) {
     "",
     "Product constraints:",
     "- The visual page must not look like a traditional website, dashboard, or landing page.",
-    "- It should feel like a complete rendered visual map.",
+    "- It should feel like a complete light hand-drawn infographic.",
+    VISUAL_STYLE_CONTRACT,
     "- Text in the image prompt must be short and readable.",
     "- Use 4-7 visual nodes.",
     "- If clicked coordinates are present, plan a zoom-in page centered on that clicked area, not a richer version of the same overview.",

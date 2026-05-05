@@ -3,6 +3,7 @@ import type {
   PlanNextPageOutput,
   TextProvider
 } from "./types";
+import { VISUAL_STYLE_CONTRACT } from "@/server/style/visual-style";
 
 function shortSource(input: string) {
   return input.length > 120 ? `${input.slice(0, 120)}...` : input;
@@ -28,7 +29,8 @@ export const mockTextProvider: TextProvider = {
         input.clickedCoordinates
           ? "This is a zoom-in page. Center the composition on the clicked area and reveal details that were not visible before."
           : "This is the opening overview page.",
-        "Create a complete visual knowledge map with a central focus, 4-7 surrounding nodes, elegant labels, and spatial depth."
+        VISUAL_STYLE_CONTRACT,
+        "Create a complete light hand-drawn infographic with a central focus, 4-7 surrounding nodes, elegant labels, and airy spacing."
       ].join("\n"),
       nodes: [
         { title: "Context", description: "What this source is about." },
