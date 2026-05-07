@@ -78,6 +78,94 @@ function base64ToBlob(base64: string, mimeType = "image/png") {
   return new Blob([bytes], { type: mimeType });
 }
 
+function firstString(...values: unknown[]) {
+  return values.find(
+    (value): value is string => typeof value === "string" && value.length > 0
+  );
+}
+
+function dataItems(body: Record<string, unknown> | undefined) {
+  return Array.isArray(body?.data)
+    ? (body.data as Array<Record<string, unknown>>)
+    : [];
+}
+
+async function imageUrlToBase64(url: string) {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Image URL fetch failed: HTTP ${response.status}`);
+  }
+
+  const bytes = Buffer.from(await response.arrayBuffer());
+  return {
+    imageBase64: bytes.toString("base64"),
+    mimeType: response.headers.get("content-type") ?? "image/png"
+  };
+}
+
+async function extractImageFromResponse(
+  response: Response,
+  context: "image generation" | "image edit"
+) {
+  const contentType = response.headers.get("content-type") ?? "";
+  const bytes = Buffer.from(await response.arrayBuffer());
+
+  if (response.ok && contentType.startsWith("image/")) {
+    return {
+      imageBase64: bytes.toString("base64"),
+      mimeType: contentType,
+      body: undefined
+    };
+  }
+
+  const text = bytes.toString("utf8");
+  let body: Record<string, unknown> | undefined;
+  try {
+    body = JSON.parse(text) as Record<string, unknown>;
+  } catch {
+    body = undefined;
+  }
+
+  if (!response.ok) {
+    const message =
+      body && typeof body === "object" && "error" in body
+        ? JSON.stringify(body.error).slice(0, 180)
+        : text.slice(0, 180);
+    throw new Error(
+      `OpenAI-compatible ${context} failed: HTTP ${response.status} ${message}`
+    );
+  }
+
+  const firstItem = dataItems(body)[0];
+  const imageBase64 = firstString(
+    firstItem?.b64_json,
+    firstItem?.base64,
+    firstItem?.image_base64,
+    firstItem?.image
+  );
+  if (imageBase64) {
+    return {
+      imageBase64,
+      mimeType: "image/png",
+      body
+    };
+  }
+
+  const imageUrl = firstString(firstItem?.url);
+  if (imageUrl) {
+    const image = await imageUrlToBase64(imageUrl);
+    return {
+      ...image,
+      body
+    };
+  }
+
+  const keys = firstItem ? Object.keys(firstItem).join(", ") : "no data item";
+  throw new Error(
+    `OpenAI-compatible ${context} returned no image payload (${keys})`
+  );
+}
+
 async function buildZoomReferenceImage(input: GenerateImageInput) {
   if (!input.referenceImageBase64 || !input.referenceClick) {
     return input.referenceImageBase64;
@@ -158,36 +246,14 @@ async function generateFromReference(
     body: form
   });
 
-  const text = await response.text();
-  let body: Record<string, unknown> | undefined;
-  try {
-    body = JSON.parse(text) as Record<string, unknown>;
-  } catch {
-    body = undefined;
-  }
-
-  if (!response.ok) {
-    const message =
-      body && typeof body === "object" && "error" in body
-        ? JSON.stringify(body.error).slice(0, 180)
-        : text.slice(0, 180);
-    throw new Error(
-      `OpenAI-compatible image edit failed: HTTP ${response.status} ${message}`
-    );
-  }
-
-  const data = body?.data as Array<{ b64_json?: string }> | undefined;
-  const imageBase64 = data?.[0]?.b64_json;
-  if (!imageBase64) {
-    throw new Error("OpenAI-compatible image edit returned no b64_json");
-  }
+  const parsed = await extractImageFromResponse(response, "image edit");
 
   return {
-    imageBase64,
-    mimeType: "image/png",
+    imageBase64: parsed.imageBase64,
+    mimeType: parsed.mimeType,
     provider: "openai-compatible-edit",
     model,
-    usage: body?.usage
+    usage: parsed.body?.usage
   };
 }
 
@@ -229,32 +295,14 @@ export const openAICompatibleImageProvider: ImageProvider = {
       body: JSON.stringify(payload)
     });
 
-    const text = await response.text();
-    let body: Record<string, unknown> | undefined;
-    try {
-      body = JSON.parse(text) as Record<string, unknown>;
-    } catch {
-      body = undefined;
-    }
-
-    if (!response.ok) {
-      throw new Error(
-        `OpenAI-compatible image generation failed: HTTP ${response.status}`
-      );
-    }
-
-    const data = body?.data as Array<{ b64_json?: string }> | undefined;
-    const imageBase64 = data?.[0]?.b64_json;
-    if (!imageBase64) {
-      throw new Error("OpenAI-compatible image generation returned no b64_json");
-    }
+    const parsed = await extractImageFromResponse(response, "image generation");
 
     return {
-      imageBase64,
-      mimeType: "image/png",
+      imageBase64: parsed.imageBase64,
+      mimeType: parsed.mimeType,
       provider: "openai-compatible",
       model,
-      usage: body?.usage
+      usage: parsed.body?.usage
     };
   }
 };
