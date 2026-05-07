@@ -110,9 +110,9 @@ VISION_PROVIDER=custom
 TEXT_PROVIDER=custom
 ```
 
-Demo 阶段默认可以使用 OpenAI-compatible Provider。内部 demo 可以优先接 ByteDance AIDP 的 `gpt-image-2` 生图接口；开源用户可以替换为自己的生图模型。真实密钥必须由运行者自己提供，不能写入代码或提交到仓库。Provider 设计细节见 `MODEL_PROVIDERS.md`。
+Demo 阶段默认可以使用 OpenAI-compatible Provider。内部 demo 可以优先接 OpenAI-compatible 的 `gpt-image-2` 生图接口；开源用户可以替换为自己的生图模型。真实密钥必须由运行者自己提供，不能写入代码或提交到仓库。Provider 设计细节见 `MODEL_PROVIDERS.md`。
 
-大纲提取和页面规划使用独立的 TextProvider。内部 demo 可以接 ByteDance AIDP 的 `gpt-5.4-2026-03-05` OpenAI-compatible 文本模型；开源用户可以替换为自己的文本模型。
+大纲提取和页面规划使用独立的 TextProvider。内部 demo 可以接 OpenAI-compatible 的 `gpt-5.4-2026-03-05` OpenAI-compatible 文本模型；开源用户可以替换为自己的文本模型。
 
 ### 2.4 页面模型
 

@@ -737,7 +737,7 @@ VisualMap 的正确方向是：
 
 完整两阶段方案见 `TWO_PHASE_PLAN.md`。
 
-外部 OpenAPI 和模型调用必须独立在 Provider 模块中，不能散落在业务代码里。Demo 阶段默认可以使用 OpenAI-compatible Provider；内部 demo 可接 ByteDance AIDP `gpt-image-2`，开源用户可替换为自己的生图模型。密钥只允许通过环境变量读取。Provider 替换规则见 `MODEL_PROVIDERS.md`。
+外部 OpenAPI 和模型调用必须独立在 Provider 模块中，不能散落在业务代码里。Demo 阶段默认可以使用 OpenAI-compatible Provider；内部 demo 可接 OpenAI-compatible `gpt-image-2`，开源用户可替换为自己的生图模型。密钥只允许通过环境变量读取。Provider 替换规则见 `MODEL_PROVIDERS.md`。
 
 ### Phase 0：本地原型骨架
 

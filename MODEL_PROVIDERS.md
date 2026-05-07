@@ -17,7 +17,7 @@ VisualMap business flow
 
 During the demo stage, the default provider is `mock` so the open source project runs without secrets.
 
-For internal demo usage, VisualMap can use the ByteDance AIDP OpenAI-compatible image endpoint. For public open source usage, users can replace it with OpenAI or any custom image model provider.
+For internal demo usage, VisualMap can use the OpenAI-compatible image endpoint. For public open source usage, users can replace it with OpenAI or any custom image model provider.
 
 The project must never commit a real API key. The runtime reads keys from environment variables:
 
@@ -32,29 +32,29 @@ The API key must be created by the project runner in their own OpenAI account an
 
 OpenAI keys are created from the API platform's API key page. For project-scoped usage, create a key in the target project settings and store it securely. The key is shown once when created, so it must be copied into a local secret store or deployment secret manager at creation time.
 
-For ByteDance AIDP demo usage:
+For OpenAI-compatible demo usage:
 
 ```text
-BYTEDANCE_AIDP_AK=...
-BYTEDANCE_AIDP_BASE_URL=https://aidp.bytedance.net/api/modelhub/online/v2/crawl/openai
-BYTEDANCE_AIDP_OFFICE_BASE_URL=https://aidp-i18ntt-sg.tiktok-row.net/api/modelhub/online/v2/crawl/openai
-BYTEDANCE_AIDP_IMAGE_MODEL=gpt-image-2
-IMAGE_PROVIDER=bytedance-aidp
+OPENAI_COMPATIBLE_IMAGE_API_KEY=...
+OPENAI_COMPATIBLE_IMAGE_BASE_URL=https://your-provider.example/api/modelhub/online/v2/crawl/openai
+OPENAI_COMPATIBLE_IMAGE_BASE_URL=https://your-provider.example/api/modelhub/online/v2/crawl/openai
+OPENAI_COMPATIBLE_IMAGE_MODEL=gpt-image-2
+IMAGE_PROVIDER=openai-compatible
 ```
 
-For ByteDance AIDP text planning:
+For OpenAI-compatible text planning:
 
 ```text
-BYTEDANCE_AIDP_TEXT_API_KEY=...
-BYTEDANCE_AIDP_TEXT_BASE_URL=https://aidp.bytedance.net/api/modelhub/online/v2/crawl/openai/deployments/gpt_openapi
-BYTEDANCE_AIDP_TEXT_MODEL=gpt-5.4-2026-03-05
-TEXT_PROVIDER=bytedance-aidp
+OPENAI_COMPATIBLE_TEXT_API_KEY=...
+OPENAI_COMPATIBLE_TEXT_BASE_URL=https://your-provider.example/api/modelhub/online/v2/crawl/openai/deployments/gpt_openapi
+OPENAI_COMPATIBLE_TEXT_MODEL=gpt-4.1
+TEXT_PROVIDER=openai-compatible
 ```
 
 Office network deployments should use the office base URL domain:
 
 ```text
-https://aidp-i18ntt-sg.tiktok-row.net
+https://your-provider.example
 ```
 
 The AK must not be committed. It should be passed as an environment variable and sent server-side only.
@@ -68,9 +68,9 @@ src/server/model-providers/
   index.ts
   types.ts
   mock-image-provider.ts
-  bytedance-aidp-image-provider.ts
+  openai-compatible-image-provider.ts
   mock-text-provider.ts
-  bytedance-aidp-text-provider.ts
+  openai-compatible-text-provider.ts
   custom-image-provider.example.ts
 ```
 
@@ -96,7 +96,7 @@ export interface ImageProvider {
 }
 ```
 
-Provider-specific mapping for ByteDance AIDP:
+Provider-specific mapping for OpenAI-compatible:
 
 ```text
 VisualMap quality preview -> low
@@ -192,8 +192,8 @@ Provider selection should be centralized:
 ```ts
 export function getImageProvider(): ImageProvider {
   switch (process.env.IMAGE_PROVIDER ?? "mock") {
-    case "bytedance-aidp":
-      return bytedanceAidpImageProvider;
+    case "openai-compatible":
+      return openAICompatibleImageProvider;
     case "mock":
       return mockImageProvider;
     case "custom":
@@ -206,18 +206,18 @@ export function getImageProvider(): ImageProvider {
 
 This keeps the demo simple while preserving model replaceability.
 
-## 8. ByteDance AIDP Image Provider Contract
+## 8. OpenAI-compatible Image Provider Contract
 
-The ByteDance AIDP provider should live in one file:
+The OpenAI-compatible provider should live in one file:
 
 ```text
-src/server/model-providers/bytedance-aidp-image-provider.ts
+src/server/model-providers/openai-compatible-image-provider.ts
 ```
 
 It should be responsible for:
 
-- Reading `BYTEDANCE_AIDP_AK`.
-- Selecting `BYTEDANCE_AIDP_BASE_URL`.
+- Reading `OPENAI_COMPATIBLE_IMAGE_API_KEY`.
+- Selecting `OPENAI_COMPATIBLE_IMAGE_BASE_URL`.
 - Mapping VisualMap size and quality values to upstream values.
 - Calling image generation.
 - Returning `imageBase64` or a stored asset URL.
@@ -229,18 +229,18 @@ Expected OpenAI-compatible SDK usage:
 import OpenAI from "openai";
 
 const client = new OpenAI({
-  apiKey: process.env.BYTEDANCE_AIDP_AK,
-  baseURL: process.env.BYTEDANCE_AIDP_BASE_URL,
+  apiKey: process.env.OPENAI_COMPATIBLE_IMAGE_API_KEY,
+  baseURL: process.env.OPENAI_COMPATIBLE_IMAGE_BASE_URL,
 });
 
 const result = await client.images.generate({
-  model: process.env.BYTEDANCE_AIDP_IMAGE_MODEL ?? "gpt-image-2",
+  model: process.env.OPENAI_COMPATIBLE_IMAGE_MODEL ?? "gpt-image-2",
   prompt: input.prompt,
   n: 1,
   size,
   quality,
   extra_headers: {
-    "api-key": process.env.BYTEDANCE_AIDP_AK,
+    "api-key": process.env.OPENAI_COMPATIBLE_IMAGE_API_KEY,
   },
 });
 ```
@@ -253,19 +253,19 @@ editImage(input): Promise<GenerateImageOutput>
 
 using the OpenAI-compatible `images.edit` API with `image[]`, `mask`, `prompt`, `model`, `quality`, `size`, and `n`.
 
-## 9. ByteDance AIDP Text Provider Contract
+## 9. OpenAI-compatible Text Provider Contract
 
-The ByteDance AIDP text provider should live in one file:
+The OpenAI-compatible text provider should live in one file:
 
 ```text
-src/server/model-providers/bytedance-aidp-text-provider.ts
+src/server/model-providers/openai-compatible-text-provider.ts
 ```
 
 It should be responsible for:
 
-- Reading `BYTEDANCE_AIDP_TEXT_API_KEY`.
-- Reading `BYTEDANCE_AIDP_TEXT_BASE_URL`.
-- Reading `BYTEDANCE_AIDP_TEXT_MODEL`.
+- Reading `OPENAI_COMPATIBLE_TEXT_API_KEY`.
+- Reading `OPENAI_COMPATIBLE_TEXT_BASE_URL`.
+- Reading `OPENAI_COMPATIBLE_TEXT_MODEL`.
 - Producing a stable JSON page plan.
 - Never exposing the key to the browser.
 

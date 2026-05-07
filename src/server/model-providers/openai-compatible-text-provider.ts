@@ -16,9 +16,6 @@ interface ChatCompletionResponse {
   choices?: ChatCompletionChoice[];
 }
 
-const DEFAULT_TEXT_BASE_URL =
-  "https://aidp.bytedance.net/api/modelhub/online/v2/crawl/openai/deployments/gpt_openapi";
-
 function extractJsonObject(content: string) {
   const trimmed = content.trim();
   if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
@@ -40,7 +37,7 @@ function parsePlan(content: string, model: string): PlanNextPageOutput {
     summary: parsed.summary,
     visualPrompt: parsed.visualPrompt,
     nodes: Array.isArray(parsed.nodes) ? parsed.nodes.slice(0, 8) : [],
-    provider: "bytedance-aidp",
+    provider: "openai-compatible",
     model
   };
 }
@@ -74,17 +71,24 @@ function buildPlanningPrompt(input: PlanNextPageInput) {
   ].join("\n");
 }
 
-export const bytedanceAidpTextProvider: TextProvider = {
+export const openAICompatibleTextProvider: TextProvider = {
   async planNextPage(input: PlanNextPageInput): Promise<PlanNextPageOutput> {
-    const apiKey = process.env.BYTEDANCE_AIDP_TEXT_API_KEY;
+    const apiKey = process.env.OPENAI_COMPATIBLE_TEXT_API_KEY;
     if (!apiKey) {
-      throw new ProviderConfigurationError("Missing BYTEDANCE_AIDP_TEXT_API_KEY");
+      throw new ProviderConfigurationError(
+        "Missing OPENAI_COMPATIBLE_TEXT_API_KEY"
+      );
     }
 
-    const baseUrl = (
-      process.env.BYTEDANCE_AIDP_TEXT_BASE_URL ?? DEFAULT_TEXT_BASE_URL
-    ).replace(/\/$/, "");
-    const model = process.env.BYTEDANCE_AIDP_TEXT_MODEL ?? "gpt-5.4-2026-03-05";
+    const configuredBaseUrl = process.env.OPENAI_COMPATIBLE_TEXT_BASE_URL;
+    if (!configuredBaseUrl) {
+      throw new ProviderConfigurationError(
+        "Missing OPENAI_COMPATIBLE_TEXT_BASE_URL"
+      );
+    }
+
+    const baseUrl = configuredBaseUrl.replace(/\/$/, "");
+    const model = process.env.OPENAI_COMPATIBLE_TEXT_MODEL ?? "gpt-4.1";
 
     const response = await fetch(`${baseUrl}/chat/completions`, {
       method: "POST",
@@ -108,13 +112,15 @@ export const bytedanceAidpTextProvider: TextProvider = {
 
     const text = await response.text();
     if (!response.ok) {
-      throw new Error(`AIDP text planning failed: HTTP ${response.status}`);
+      throw new Error(
+        `OpenAI-compatible text planning failed: HTTP ${response.status}`
+      );
     }
 
     const body = JSON.parse(text) as ChatCompletionResponse;
     const content = body.choices?.[0]?.message?.content;
     if (!content) {
-      throw new Error("AIDP text planning returned no content");
+      throw new Error("OpenAI-compatible text planning returned no content");
     }
 
     return parsePlan(content, model);

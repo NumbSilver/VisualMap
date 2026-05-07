@@ -21,9 +21,9 @@ Flipbook-style direct generation prototype
 - Server-side image generation API route.
 - Replaceable model provider abstraction.
 - Mock image provider for open source local runs without secrets.
-- ByteDance AIDP image provider for internal demo runs.
+- OpenAI-compatible image provider for internal demo runs.
 - Mock text provider for open source local runs without secrets.
-- ByteDance AIDP text provider for outline extraction and page planning.
+- OpenAI-compatible text provider for outline extraction and page planning.
 - URL Source Fetcher for readable HTML/article extraction before planning.
 - Global visual style contract for light hand-drawn infographic generation.
 - Parent image reference is passed on click so providers that support image edit/reference can generate a zoom-in page.
@@ -60,9 +60,9 @@ open app
 
 With `IMAGE_PROVIDER=mock` and `TEXT_PROVIDER=mock`, the app runs without any external API key and shows a generated SVG placeholder.
 
-With `IMAGE_PROVIDER=bytedance-aidp` and `BYTEDANCE_AIDP_AK` configured, the app calls the ByteDance AIDP OpenAI-compatible `gpt-image-2` endpoint and renders real generated images.
+With `IMAGE_PROVIDER=openai-compatible` and `OPENAI_COMPATIBLE_IMAGE_API_KEY` configured, the app calls the OpenAI-compatible `gpt-image-2` endpoint and renders real generated images.
 
-With `TEXT_PROVIDER=bytedance-aidp` and `BYTEDANCE_AIDP_TEXT_API_KEY` configured, the app calls the ByteDance AIDP OpenAI-compatible `gpt-5.4-2026-03-05` endpoint to produce the page title, summary, nodes, and visual prompt before image generation.
+With `TEXT_PROVIDER=openai-compatible` and `OPENAI_COMPATIBLE_TEXT_API_KEY` configured, the app calls the OpenAI-compatible `gpt-4.1` endpoint to produce the page title, summary, nodes, and visual prompt before image generation.
 
 The default UI mode is `Auto`. Users can still force Explain, Explore, or Add when they want direct control.
 
@@ -88,20 +88,20 @@ Run with mock provider:
 npm run dev
 ```
 
-Run with ByteDance AIDP provider:
+Run with OpenAI-compatible provider:
 
 ```bash
-IMAGE_PROVIDER=bytedance-aidp \
-BYTEDANCE_AIDP_AK=your-ak \
-BYTEDANCE_AIDP_USE_OFFICE=true \
+IMAGE_PROVIDER=openai-compatible \
+OPENAI_COMPATIBLE_IMAGE_API_KEY=your-ak \
+OPENAI_COMPATIBLE_USE_ALTERNATE_BASE_URL=true \
 npm run dev
 ```
 
-Run with ByteDance AIDP text planning and mock image generation:
+Run with OpenAI-compatible text planning and mock image generation:
 
 ```bash
-TEXT_PROVIDER=bytedance-aidp \
-BYTEDANCE_AIDP_TEXT_API_KEY=your-text-api-key \
+TEXT_PROVIDER=openai-compatible \
+OPENAI_COMPATIBLE_TEXT_API_KEY=your-text-api-key \
 npm run dev
 ```
 
@@ -120,10 +120,10 @@ Latest local checks:
 - `npm run typecheck`: passed.
 - `npm run build`: passed.
 - `npm audit --omit=dev`: 0 vulnerabilities after `postcss` override.
-- ByteDance AIDP provider route test: passed.
-- ByteDance AIDP text provider route test: passed.
+- OpenAI-compatible provider route test: passed.
+- OpenAI-compatible text provider route test: passed.
 
-Observed AIDP generation speed:
+Observed OpenAI-compatible generation speed:
 
 ```text
 preview / low request through local API: about 51s

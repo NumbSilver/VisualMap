@@ -41,8 +41,8 @@ Already implemented:
 - Image-first full-screen canvas.
 - URL input and `?url=` generation.
 - Replaceable text/image providers.
-- AIDP text planning and image generation.
-- AIDP image edit drilldown.
+- OpenAI-compatible text planning and image generation.
+- OpenAI-compatible image edit drilldown.
 - URL parsing for WeChat article content.
 - Product persistence under `data/products`.
 - Back and forward navigation.

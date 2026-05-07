@@ -62,27 +62,41 @@ VISION_PROVIDER=mock
 
 To use real providers, edit `.env.local`. Do not commit real API keys.
 
-### ByteDance AIDP Image Provider
+### OpenAI-Compatible Image Provider
 
 ```env
-IMAGE_PROVIDER=bytedance-aidp
-BYTEDANCE_AIDP_AK=your-image-ak
-BYTEDANCE_AIDP_IMAGE_MODEL=gpt-image-2
-BYTEDANCE_AIDP_USE_OFFICE=false
+IMAGE_PROVIDER=openai-compatible
+OPENAI_COMPATIBLE_IMAGE_API_KEY=your-image-api-key
+OPENAI_COMPATIBLE_IMAGE_BASE_URL=https://your-provider.example/v1
+OPENAI_COMPATIBLE_IMAGE_EDIT_BASE_URL=https://your-provider.example/v1
+OPENAI_COMPATIBLE_IMAGE_MODEL=gpt-image-2
+OPENAI_COMPATIBLE_API_KEY_QUERY_PARAM=
 ```
 
-If you are on an office network that requires the internal domain, set:
+`OPENAI_COMPATIBLE_IMAGE_EDIT_BASE_URL` is optional. If it is empty, VisualMap uses `OPENAI_COMPATIBLE_IMAGE_BASE_URL` for both image generation and image edit calls.
 
-```env
-BYTEDANCE_AIDP_USE_OFFICE=true
+`OPENAI_COMPATIBLE_API_KEY_QUERY_PARAM` is optional. Leave it empty for standard Bearer-token providers. Set it only when your provider requires the API key in a query parameter.
+
+The image provider expects OpenAI-style endpoints:
+
+```text
+POST /images/generations
+POST /images/edits
 ```
 
-### ByteDance AIDP Text Provider
+### OpenAI-Compatible Text Provider
 
 ```env
-TEXT_PROVIDER=bytedance-aidp
-BYTEDANCE_AIDP_TEXT_API_KEY=your-text-ak
-BYTEDANCE_AIDP_TEXT_MODEL=gpt-5.4-2026-03-05
+TEXT_PROVIDER=openai-compatible
+OPENAI_COMPATIBLE_TEXT_API_KEY=your-text-api-key
+OPENAI_COMPATIBLE_TEXT_BASE_URL=https://your-provider.example/v1
+OPENAI_COMPATIBLE_TEXT_MODEL=gpt-4.1
+```
+
+The text provider expects an OpenAI-style endpoint:
+
+```text
+POST /chat/completions
 ```
 
 ## Provider Architecture
@@ -99,8 +113,8 @@ Important files:
 - `index.ts`: provider selection from environment variables.
 - `mock-image-provider.ts`: local mock image generator.
 - `mock-text-provider.ts`: local mock planner.
-- `bytedance-aidp-image-provider.ts`: OpenAI-compatible image provider.
-- `bytedance-aidp-text-provider.ts`: OpenAI-compatible text planner.
+- `openai-compatible-image-provider.ts`: OpenAI-compatible image provider.
+- `openai-compatible-text-provider.ts`: OpenAI-compatible text planner.
 
 To add your own model, implement the provider interface and register it in `index.ts`.
 
