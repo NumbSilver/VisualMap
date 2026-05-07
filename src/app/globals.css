@@ -58,8 +58,10 @@ a {
 }
 
 .generated-image {
-  width: 100%;
-  height: 100%;
+  width: calc(100% * var(--image-zoom, 0.92));
+  height: calc(100% * var(--image-zoom, 0.92));
+  max-width: none;
+  max-height: none;
   object-fit: contain;
   user-select: none;
   -webkit-user-drag: none;
@@ -188,8 +190,16 @@ a {
   gap: 4px;
 }
 
+.zoom-controls {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  padding-left: 2px;
+}
+
 .mode-button,
 .icon-button,
+.fit-button,
 .source-command button {
   min-height: 38px;
   border: 0;
@@ -203,12 +213,14 @@ a {
 
 .mode-button:hover,
 .icon-button:hover,
+.fit-button:hover,
 .source-command button:hover {
   background: rgba(46, 52, 47, 0.15);
 }
 
 .mode-button:disabled,
 .icon-button:disabled,
+.fit-button:disabled,
 .source-command button:disabled {
   cursor: not-allowed;
   opacity: 0.48;
@@ -229,6 +241,13 @@ a {
   width: 38px;
   border-radius: 12px;
   font-size: 18px;
+}
+
+.fit-button {
+  width: 56px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .source-command {
@@ -408,6 +427,10 @@ a {
   .mode-button {
     min-width: auto;
     padding: 0 11px;
+  }
+
+  .zoom-controls {
+    display: none;
   }
 
   .status-panel {
