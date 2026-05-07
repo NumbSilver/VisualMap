@@ -71,11 +71,14 @@ OPENAI_COMPATIBLE_IMAGE_BASE_URL=https://your-provider.example/v1
 OPENAI_COMPATIBLE_IMAGE_EDIT_BASE_URL=https://your-provider.example/v1
 OPENAI_COMPATIBLE_IMAGE_MODEL=gpt-image-2
 OPENAI_COMPATIBLE_API_KEY_QUERY_PARAM=
+OPENAI_COMPATIBLE_IMAGE_EDIT_FIELD=image[],image
 ```
 
 `OPENAI_COMPATIBLE_IMAGE_EDIT_BASE_URL` is optional. If it is empty, VisualMap uses `OPENAI_COMPATIBLE_IMAGE_BASE_URL` for both image generation and image edit calls.
 
 `OPENAI_COMPATIBLE_API_KEY_QUERY_PARAM` is optional. Leave it empty for standard Bearer-token providers. Set it only when your provider requires the API key in a query parameter.
+
+`OPENAI_COMPATIBLE_IMAGE_EDIT_FIELD` is optional. VisualMap tries `image[]` and `image` by default because OpenAI-compatible image edit providers do not all use the same multipart field name.
 
 The image provider expects OpenAI-style endpoints:
 

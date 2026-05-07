@@ -10,6 +10,14 @@ import sharp from "sharp";
 
 type OpenAICompatibleSize = "1024x1024" | "1536x1024" | "1024x1536" | "auto";
 type OpenAICompatibleQuality = "high" | "medium" | "low" | "auto";
+type ImageResponseContext = "image generation" | "image edit";
+
+class NoImagePayloadError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "NoImagePayloadError";
+  }
+}
 
 function mapSize(
   aspectRatio: VisualMapAspectRatio = "16:9"
@@ -105,7 +113,7 @@ async function imageUrlToBase64(url: string) {
 
 async function extractImageFromResponse(
   response: Response,
-  context: "image generation" | "image edit"
+  context: ImageResponseContext
 ) {
   const contentType = response.headers.get("content-type") ?? "";
   const bytes = Buffer.from(await response.arrayBuffer());
@@ -161,9 +169,21 @@ async function extractImageFromResponse(
   }
 
   const keys = firstItem ? Object.keys(firstItem).join(", ") : "no data item";
-  throw new Error(
+  throw new NoImagePayloadError(
     `OpenAI-compatible ${context} returned no image payload (${keys})`
   );
+}
+
+function getEditImageFieldNames() {
+  const configured = process.env.OPENAI_COMPATIBLE_IMAGE_EDIT_FIELD;
+  if (configured) {
+    return configured
+      .split(",")
+      .map((field) => field.trim())
+      .filter(Boolean);
+  }
+
+  return ["image[]", "image"];
 }
 
 async function buildZoomReferenceImage(input: GenerateImageInput) {
@@ -222,39 +242,59 @@ async function generateFromReference(
     return null;
   }
 
-  const baseUrl = getEditBaseUrl();
-  const url = withOptionalApiKeyQuery(`${baseUrl}/images/edits`, apiKey);
-  const form = new FormData();
   const markedReference = await buildZoomReferenceImage(input);
-  form.append(
-    "image[]",
-    base64ToBlob(markedReference ?? input.referenceImageBase64, "image/png"),
-    "parent-marked.png"
+  let lastNoPayloadError: Error | null = null;
+
+  for (const imageFieldName of getEditImageFieldNames()) {
+    const baseUrl = getEditBaseUrl();
+    const url = withOptionalApiKeyQuery(`${baseUrl}/images/edits`, apiKey);
+    const form = new FormData();
+    form.append(
+      imageFieldName,
+      base64ToBlob(markedReference ?? input.referenceImageBase64, "image/png"),
+      "parent-marked.png"
+    );
+    form.append("prompt", input.prompt);
+    form.append("model", model);
+    form.append("quality", mapQuality(input.quality));
+    form.append("size", mapSize(input.aspectRatio));
+    form.append("n", "1");
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "api-key": apiKey
+      },
+      body: form
+    });
+
+    try {
+      const parsed = await extractImageFromResponse(response, "image edit");
+
+      return {
+        imageBase64: parsed.imageBase64,
+        mimeType: parsed.mimeType,
+        provider: "openai-compatible-edit",
+        model,
+        usage: parsed.body?.usage
+      };
+    } catch (error) {
+      if (error instanceof NoImagePayloadError) {
+        lastNoPayloadError = error;
+        continue;
+      }
+
+      throw error;
+    }
+  }
+
+  console.warn(
+    lastNoPayloadError?.message ??
+      "OpenAI-compatible image edit returned no image payload; falling back to generation."
   );
-  form.append("prompt", input.prompt);
-  form.append("model", model);
-  form.append("quality", mapQuality(input.quality));
-  form.append("size", mapSize(input.aspectRatio));
-  form.append("n", "1");
 
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "api-key": apiKey
-    },
-    body: form
-  });
-
-  const parsed = await extractImageFromResponse(response, "image edit");
-
-  return {
-    imageBase64: parsed.imageBase64,
-    mimeType: parsed.mimeType,
-    provider: "openai-compatible-edit",
-    model,
-    usage: parsed.body?.usage
-  };
+  return null;
 }
 
 export const openAICompatibleImageProvider: ImageProvider = {
